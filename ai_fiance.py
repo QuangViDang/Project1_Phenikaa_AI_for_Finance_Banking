@@ -3,47 +3,52 @@ import pandas as pd
 
 app = Flask(__name__)
 
+responseError = {
+    'message': 'Error processing file',
+}
+responseSuccess = {
+    'status': 200
+}
+
+file_global = []
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('file')
+    print("API", file)
     if not file:
-        response = {
-            'status': 'error',
-            'message': 'No file uploaded',
-            'data': None
-        }
-        return jsonify(response), 400  # Trả về status code 400 (Bad Request) cho lỗi
-
-    response = {
-        'status': 200,
-        'message': 'File uploaded successfully',
-        'data': None
-    }
-    return jsonify(response)  # Trả về status code 200 (OK) cho thành công
+        responseError["status"] = 400
+        print(responseError)
+        return jsonify(responseError)
+    else: 
+        file_global.append(file)
+        print("Length", file_global[0])
+        responseSuccess['message'] = "Success!!!" 
+        print("Success!")
+        return jsonify(responseSuccess) 
 
 @app.route('/process_file', methods=['GET'])
 def process_file():
     # Đọc tệp CSV và lấy 5 dòng đầu
+    
     try:
-        df = pd.read_csv('path_to_your_csv_file.csv')
-        first_5_rows = df.head(5)
+        if (file_global.__len__ != 0):
+            for file in file_global:
+                df = pd.read_csv(file)
+                first_5_rows = df.head(5)
 
-        # Chuyển 5 dòng đầu thành chuỗi HTML
-        result = first_5_rows.to_html()
-
-        response = {
-            'status': 'success',
-            'message': 'File processed successfully',
-            'data': result
-        }
-        return jsonify(response), 200  # Trả về status code 200 (OK) cho thành công
+                # Chuyển 5 dòng đầu thành chuỗi HTML
+                result = first_5_rows.to_html()
+                responseSuccess = {  
+                    "code":200,
+                    "status":"success",
+                    "data":result
+                }
+                
+                return jsonify(responseSuccess)  # Trả về status code 200 (OK) cho thành công
     except Exception as e:
-        response = {
-            'status': 'error',
-            'message': 'Error processing file',
-            'data': str(e)
-        }
+      
         return jsonify(response), 500  # Trả về status code 500 (Internal Server Error) cho lỗi
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
